@@ -4,18 +4,18 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 
 public class Model{
-	int K; 
+	int K;
 	double alpha;
 	double beta;
 	String dataset;
 	String ParametersStr;
-	int V; 
-	int D; 
-	int iterNum; 
+	int V;
+	int D;
+	int iterNum;
 	double alpha0;
 	double beta0;
 	int[] z;
-	int[] m_z; 
+	int[] m_z;
 	int[][] n_zv;
 	int[] n_z;
 	double smallDouble = 1e-100;
@@ -32,7 +32,7 @@ public class Model{
 	double[][] numerator_last_num;// D K
 	int[][] numerator_last_overflow;
 
-	public Model(int K, int V, int iterNum, double alpha, double beta, 
+	public Model(int K, int V, int iterNum, double alpha, double beta,
 			String dataset, String ParametersStr)
 	{
 		this.dataset = dataset;
@@ -44,7 +44,7 @@ public class Model{
 		this.iterNum = iterNum;
 		this.alpha0 = K * alpha;
 		this.beta0 = V * beta;
-		
+
 		this.m_z = new int[K];
 		this.n_z = new int[K];
 		this.n_zv = new int[K][V];
@@ -68,8 +68,8 @@ public class Model{
 			for(int w = 0; w < document.wordNum; w++){
 				int wordNo = document.wordIdArray[w];
 				int wordFre = document.wordFreArray[w];
-				n_zv[cluster][wordNo] += wordFre; 
-				n_z[cluster] += wordFre; 
+				n_zv[cluster][wordNo] += wordFre;
+				n_z[cluster] += wordFre;
 			}
 		}
 	}
@@ -121,76 +121,38 @@ public class Model{
 
 
 		for(int i = 0; i < iterNum; i++){
-            double start = System.currentTimeMillis();
+//            double start = System.currentTimeMillis();
 
             count = 0;
-		    if(i < startI){
-                for(int d = 0; d < D; d++){
-                    Document document = documentSet.documents.get(d);
-                    int cluster = z[d];
-                    m_z[cluster]--;
-                    for(int w = 0; w < document.wordNum; w++){
-                        int wordNo = document.wordIdArray[w];
-                        int wordFre = document.wordFreArray[w];
-                        n_zv[cluster][wordNo] -= wordFre;
-                        n_z[cluster] -= wordFre;
-                    }
-                    cluster = sampleCluster_useIndex(d, document);
-                    z[d] = cluster;
-                    m_z[cluster]++;
-                    for(int w = 0; w < document.wordNum; w++){
-                        int wordNo = document.wordIdArray[w];
-                        int wordFre = document.wordFreArray[w];
-                        n_zv[cluster][wordNo] += wordFre;
-                        n_z[cluster] += wordFre;
-                    }
+            for(int d = 0; d < D; d++) {
+                Document document = documentSet.documents.get(d);
+                int cluster = z[d];
+                m_z[cluster]--;
+                for (int w = 0; w < document.wordNum; w++) {
+                    int wordNo = document.wordIdArray[w];
+                    int wordFre = document.wordFreArray[w];
+                    n_zv[cluster][wordNo] -= wordFre;
+                    n_z[cluster] -= wordFre;
                 }
-            }else if(i == startI){
-                for(int d = 0; d < D; d++){
-                    Document document = documentSet.documents.get(d);
-                    int cluster = z[d];
-                    m_z[cluster]--;
-                    for(int w = 0; w < document.wordNum; w++){
-                        int wordNo = document.wordIdArray[w];
-                        int wordFre = document.wordFreArray[w];
-                        n_zv[cluster][wordNo] -= wordFre;
-                        n_z[cluster] -= wordFre;
-                    }
+
+                if (i < startI) {
+                    cluster = sampleCluster_useIndex(d, document);
+                } else if (i == startI) {
                     cluster = sampleCluster_useIndexAndwordProb_prepare(d, document);
 
                     from[d] = z[d];
-                    if(cluster != z[d]){
-                        for(int w = 0;w < document.wordNum;w++){
+                    if (cluster != z[d]) {
+                        for (int w = 0; w < document.wordNum; w++) {
                             int wordNo = document.wordIdArray[w];
                             int wordFre = document.wordFreArray[w];
                             n_zv_change[z[d]][wordNo] -= wordFre;
                             n_zv_change[cluster][wordNo] += wordFre;
                         }
                     }
-                    z[d] = cluster;
-                    m_z[cluster]++;
-                    for(int w = 0; w < document.wordNum; w++){
-                        int wordNo = document.wordIdArray[w];
-                        int wordFre = document.wordFreArray[w];
-                        n_zv[cluster][wordNo] += wordFre;
-                        n_z[cluster] += wordFre;
-                    }
-                }
-            }else{
-                for(int d = 0; d < D; d++){
-                    Document document = documentSet.documents.get(d);
-                    int cluster = z[d];
-                    m_z[cluster]--;
-                    for(int w = 0; w < document.wordNum; w++){
-                        int wordNo = document.wordIdArray[w];
-                        int wordFre = document.wordFreArray[w];
-                        n_zv[cluster][wordNo] -= wordFre;
-                        n_z[cluster] -= wordFre;
-                    }
 
-
-                    if(from[d] != z[d]){
-                        for(int w = 0;w < document.wordNum;w++){
+                } else {
+                    if (from[d] != z[d]) {
+                        for (int w = 0; w < document.wordNum; w++) {
                             int wordNo = document.wordIdArray[w];
                             int wordFre = document.wordFreArray[w];
                             n_zv_change[from[d]][wordNo] += wordFre;
@@ -201,8 +163,8 @@ public class Model{
                     cluster = sampleCluster_useIndexAndwordProb(d, document);
 
                     from[d] = z[d];
-                    if(cluster != z[d]){
-                        for(int w = 0;w < document.wordNum;w++){
+                    if (cluster != z[d]) {
+                        for (int w = 0; w < document.wordNum; w++) {
                             int wordNo = document.wordIdArray[w];
                             int wordFre = document.wordFreArray[w];
                             n_zv_change[z[d]][wordNo] -= wordFre;
@@ -210,19 +172,21 @@ public class Model{
                         }
                     }
 
-                    z[d] = cluster;
-                    m_z[cluster]++;
-                    for(int w = 0; w < document.wordNum; w++){
-                        int wordNo = document.wordIdArray[w];
-                        int wordFre = document.wordFreArray[w];
-                        n_zv[cluster][wordNo] += wordFre;
-                        n_z[cluster] += wordFre;
-                    }
+                }
+
+                z[d] = cluster;
+                m_z[cluster]++;
+                for (int w = 0; w < document.wordNum; w++) {
+                    int wordNo = document.wordIdArray[w];
+                    int wordFre = document.wordFreArray[w];
+                    n_zv[cluster][wordNo] += wordFre;
+                    n_z[cluster] += wordFre;
                 }
             }
-            double end = System.currentTimeMillis();
-            System.out.println(i + "," + (end - start));
 
+//            double end = System.currentTimeMillis();
+//            System.out.println(i + "," + (end - start));
+//            System.out.println(i + ", " + count );
 
 		}
 	}
@@ -254,7 +218,7 @@ public class Model{
 					numerator_num /= largeDouble;
 					numerator_overflow++;
 				}
-				while(numerator_num < smallDouble){
+				if(numerator_num < smallDouble){
 					numerator_num *= largeDouble;
 					numerator_overflow--;
 				}
@@ -275,16 +239,16 @@ public class Model{
 		double[] prob = new double[K];
 		int[] overflowCount = new int[K];
 
-		for(int k = 0; k < K;k++){
-			prob[k] = (m_z[k] + alpha) / (D - 1 + alpha0);
+		for(int k = 0; k < K;k++) {
+            prob[k] = (m_z[k] + alpha) / (D - 1 + alpha0);
 
-			int index1 = n_z[k];
-			int index2 = index1 + document.num;
-			double denominator_num = denominator_index_num[index2] / denominator_index_num[index1];
-			int denominator_overflow = denominator_index_overflow[index2] - denominator_index_overflow[index1];
+            int index1 = n_z[k];
+            int index2 = index1 + document.num;
+            double denominator_num = denominator_index_num[index2] / denominator_index_num[index1];
+            int denominator_overflow = denominator_index_overflow[index2] - denominator_index_overflow[index1];
 
-//			double numerator_num = 1.0;
-//			int numerator_overflow = 0;
+			double numerator_num = 1.0;
+			int numerator_overflow = 0;
 
 //			int changeCount = 0;
 //			for(int w = 0;w < document.wordNum;w++){
@@ -293,6 +257,9 @@ public class Model{
 //					changeCount++;
 //				}
 //			}
+//			if(changeCount > document.wordNum/2){
+//			    count++;
+//            }
 //			if(changeCount > document.wordNum/2){
 //				for(int w = 0;w < document.wordNum;w++){
 //					int wordNo = document.wordIdArray[w];
@@ -313,42 +280,78 @@ public class Model{
 //					}
 //				}
 //			}else{
-				double value = 1;
-				int overflow = 0;
-				for(int w = 0; w < document.wordNum;w++){
-					if(n_zv_change[k][w] != 0){
-						int wordNo = document.wordIdArray[w];
-						int wordFre = document.wordFreArray[w];
-						int change = n_zv_change[k][wordNo];
+            double value = 1.0;
+            int overflow = 0;
+            for (int w = 0; w < document.wordNum; w++) {
+                if (n_zv_change[k][w] != 0) {
+                    int wordNo = document.wordIdArray[w];
+                    int wordFre = document.wordFreArray[w];
+                    int change = n_zv_change[k][wordNo];
 
-						index1 = n_zv[k][wordNo];
-						index2 = index1 + wordFre;
-						value *= numerator_index_num[index2] / numerator_index_num[index1];
-						overflow += numerator_index_overflow[index2] - numerator_index_overflow[index1];
+                    index1 = n_zv[k][wordNo];
+                    index2 = index1 + wordFre;
+                    value *= numerator_index_num[index2] / numerator_index_num[index1];
+                    overflow += numerator_index_overflow[index2] - numerator_index_overflow[index1];
 
-						index1 = n_zv[k][wordNo] - change;
-						index2 = index1 + wordFre;
-						value *= numerator_index_num[index1] / numerator_index_num[index2];
-						overflow += numerator_index_overflow[index1] - numerator_index_overflow[index2];
+                    if (value > largeDouble) {
+                        value /= largeDouble;
+                        overflow++;
+                    }
+                    if (value < smallDouble) {
+                        value *= largeDouble;
+                        overflow--;
+                    }
 
-						if(value > largeDouble){
-							value /= largeDouble;
-							overflow++;
-						}
-						if(value < smallDouble){
-							value *= largeDouble;
-							overflow--;
-						}
-					}
-				}
-                numerator_last_num[d][k] *= value;
-				numerator_last_overflow[d][k] += overflow;
+                    index1 = n_zv[k][wordNo] - change;
+                    index2 = index1 + wordFre;
+                    value *= numerator_index_num[index1] / numerator_index_num[index2];
+                    overflow += numerator_index_overflow[index1] - numerator_index_overflow[index2];
 
+                    if (value > largeDouble) {
+                        value /= largeDouble;
+                        overflow++;
+                    }
+                    if (value < smallDouble) {
+                        value *= largeDouble;
+                        overflow--;
+                    }
+                }
+            }
+
+//            numerator_num = numerator_last_num[d][k] * value;
+//            numerator_overflow = numerator_last_overflow[d][k] + overflow;
+//
+//            if(numerator_num > largeDouble){
+//                numerator_num /= largeDouble;
+//                numerator_overflow++;
+//            }
+//            if(numerator_num < smallDouble){
+//                numerator_num *= largeDouble;
+//                numerator_overflow--;
+//            }
+//
+//
+//            numerator_last_num[d][k] = numerator_num;
+//            numerator_last_overflow[d][k] = numerator_overflow;
+
+            numerator_last_num[d][k] *= value;
+            numerator_last_overflow[d][k] += overflow;
+
+            if(numerator_last_num[d][k] > largeDouble){
+                numerator_last_num[d][k] /= largeDouble;
+                numerator_last_overflow[d][k]++;
+            }
+            if(numerator_last_num[d][k] < smallDouble){
+                numerator_last_num[d][k] *= largeDouble;
+                numerator_last_overflow[d][k]--;
+            }
 			prob[k] *= numerator_last_num[d][k]/denominator_num;
 			overflowCount[k] = numerator_last_overflow[d][k] - denominator_overflow;
 		}
 
+//		double[] temp = prob.clone();
 		reComputeProbs(prob, overflowCount, K);
+
 
 		return chooseK(prob);
 	}
@@ -380,7 +383,7 @@ public class Model{
 					numerator_num /= largeDouble;
 					numerator_overflow++;
 				}
-				while(numerator_num < smallDouble){
+				if(numerator_num < smallDouble){
 					numerator_num *= largeDouble;
 					numerator_overflow--;
 				}
@@ -397,7 +400,7 @@ public class Model{
 	}
 
 	private int sampleCluster(int d, Document document)
-	{ 
+	{
 		double[] prob = new double[K];
 		int[] overflowCount = new int[K];
 
@@ -413,21 +416,21 @@ public class Model{
 						overflowCount[k]--;
 						valueOfRule2 *= largeDouble;
 					}
-					valueOfRule2 *= (n_zv[k][wordNo] + beta + j) 
+					valueOfRule2 *= (n_zv[k][wordNo] + beta + j)
 							 / (n_z[k] + beta0 + i);
 					i++;
 				}
 			}
-			prob[k] *= valueOfRule2;			
+			prob[k] *= valueOfRule2;
 		}
-		
+
 		reComputeProbs(prob, overflowCount, K);
 
 
 
 		return chooseK(prob);
 	}
-	
+
 	private void reComputeProbs(double[] prob, int[] overflowCount, int K)
 	{
 		int max = Integer.MIN_VALUE;
@@ -436,12 +439,12 @@ public class Model{
 				max = overflowCount[k];
 			}
 		}
-		
-		for(int k = 0; k < K; k++){			
+
+		for(int k = 0; k < K; k++){
 			if(prob[k] > 0){
 				prob[k] = prob[k] * Math.pow(largeDouble, overflowCount[k] - max);
 			}
-		}		
+		}
 	}
 
 	private int chooseK(double prob[]){
@@ -455,23 +458,20 @@ public class Model{
 				break;
 			}
 		}
-		if(kChoosed == 10){
-			System.out.printf("");
-		}
 		return  kChoosed;
 	}
 
 	public void output(DocumentSet documentSet, String outputPath) throws Exception
 	{
 		String outputDir = outputPath + dataset + ParametersStr + "/";
-		
+
 		File file = new File(outputDir);
 		if(!file.exists()){
 			if(!file.mkdirs()){
 				System.out.println("Failed to create directory:" + outputDir);
 			}
 		}
-		
+
 		outputClusteringResult(outputDir, documentSet);
 	}
 

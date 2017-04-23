@@ -10,7 +10,7 @@ public class Main {
         int K = 20;
         double alpha = 0.1;
         double beta = 0.1;
-        int iterNum = 10;
+        int iterNum = 20;
         String dataset = "20ng";
         GSDMM gsdmm = new GSDMM(K, alpha, beta, iterNum, dataset);
 
@@ -27,7 +27,7 @@ public class Main {
         System.out.println("calculateIndex Time Used:" + (endTime-startTime)/1000.0 + "s");
 
         startTime = System.currentTimeMillis();
-        gsdmm.runGSDMM(true,false, 0);
+        gsdmm.runGSDMM(true,true, 0);
         endTime = System.currentTimeMillis();
         System.out.println("gibbsSampling Time Used:" + (endTime-startTime)/1000.0 + "s");
 
