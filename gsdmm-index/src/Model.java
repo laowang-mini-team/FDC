@@ -27,15 +27,14 @@ public class Model{
 	double[] denominator_index_num;
 	int[] denominator_index_overflow;
 
-	int[][] n_zv_change;//last D operation changes
-	int[] from;
+	int[][] n_zv_change;//last D operation changes, [K][V]
+	int[] from;// [D]
 
 	double[][] numerator_last_num;// D K
 	int[][] numerator_last_overflow;
 
 	int[] labels;
 	Random random;
-	int[][] n_zv_d1;
 
 
 	public Model(int K, int V, int iterNum, double alpha, double beta,
@@ -81,7 +80,6 @@ public class Model{
 			}
 		}
 		labels = Main.load_labels("data/" + dataset);
-		n_zv_d1 = new int[K][V];
 	}
 	public void gibbsSampling(DocumentSet documentSet,boolean useIndex)
 	{
@@ -144,7 +142,6 @@ public class Model{
                     n_zv[cluster][wordNo] -= wordFre;
                     n_z[cluster] -= wordFre;
                 }
-
 //                if (i < startI) {
 //                    cluster = sampleCluster_useIndex(d, document);
 //                } else if (i == startI) {
@@ -183,7 +180,6 @@ public class Model{
 //                    }
 //
 //                }
-
                 if(i > startI){
 					if (from[d] != z[d]) {
 						for (int w = 0; w < document.wordNum; w++) {
@@ -200,13 +196,10 @@ public class Model{
 				}else if(i == startI){
 					cluster = sampleCluster_useIndexAndwordProb_prepare(d, document);
 				}else{
-
 					cluster = sampleCluster_useIndexAndwordProb(d, document);
-
 				}
 
-                if(i >= startI){
-					from[d] = z[d];
+				if(i >= startI){
 					if (cluster != z[d]) {
 						for (int w = 0; w < document.wordNum; w++) {
 							int wordNo = document.wordIdArray[w];
@@ -215,6 +208,7 @@ public class Model{
 							n_zv_change[cluster][wordNo] += wordFre;
 						}
 					}
+					from[d] = z[d];
 				}
 
 				z[d] = cluster;
@@ -226,9 +220,7 @@ public class Model{
                     n_z[cluster] += wordFre;
                 }
             }
-			System.out.println(Java_MI.compute_normalized_mutual_information(z, labels));
-
-
+//			System.out.println(Java_MI.compute_normalized_mutual_information(z, labels));
 
 //            double end = System.currentTimeMillis();
 //            System.out.println(i + "," + (end - start));
@@ -269,12 +261,12 @@ public class Model{
 					numerator_overflow--;
 				}
 			}
+
 			prob[k] *= numerator_num/denominator_num;
 			overflowCount[k] = numerator_overflow - denominator_overflow;
 		}
 
 		reComputeProbs(prob, overflowCount, K);
-
 		return chooseK(prob);
 	}
 
@@ -290,15 +282,13 @@ public class Model{
             double denominator_num = denominator_index_num[index2] / denominator_index_num[index1];
             int denominator_overflow = denominator_index_overflow[index2] - denominator_index_overflow[index1];
 
-			double numerator_num = 1.0;
-			int numerator_overflow = 0;
-
             double value = 1.0;
             int overflow = 0;
             for (int w = 0; w < document.wordNum; w++) {
-                if (n_zv_change[k][w] != 0) {
-                    int wordNo = document.wordIdArray[w];
-                    int wordFre = document.wordFreArray[w];
+				int wordNo = document.wordIdArray[w];
+				int wordFre = document.wordFreArray[w];
+                if (n_zv_change[k][wordNo] != 0) {
+
                     int change = n_zv_change[k][wordNo];
 
                     index1 = n_zv[k][wordNo];
@@ -306,24 +296,15 @@ public class Model{
                     value *= numerator_index_num[index2] / numerator_index_num[index1];
                     overflow += numerator_index_overflow[index2] - numerator_index_overflow[index1];
 
-                    if (value > largeDouble) {
-                        value /= largeDouble;
-                        overflow++;
-                    }
-                    if (value < smallDouble) {
-                        value *= largeDouble;
-                        overflow--;
-                    }
-
+//                    if (value > largeDouble) {
+//                        value /= largeDouble;
+//                        overflow++;
+//                    }
+//                    if (value < smallDouble) {
+//                        value *= largeDouble;
+//                        overflow--;
+//                    }
                     index1 = n_zv[k][wordNo] - change;
-
-//                    if(d == 1){
-//                    	if(n_zv_d1[k][wordNo] != index1){
-//							System.out.println(n_zv_d1[k][wordNo] + "," + index1 + "," + wordFre);
-//						}
-//						n_zv_d1[k][wordNo] = index1 + change;
-//					}
-
                     index2 = index1 + wordFre;
                     value *= numerator_index_num[index1] / numerator_index_num[index2];
                     overflow += numerator_index_overflow[index1] - numerator_index_overflow[index2];
@@ -339,22 +320,6 @@ public class Model{
                 }
             }
 
-//            numerator_num = numerator_last_num[d][k] * value;
-//            numerator_overflow = numerator_last_overflow[d][k] + overflow;
-//
-//            if(numerator_num > largeDouble){
-//                numerator_num /= largeDouble;
-//                numerator_overflow++;
-//            }
-//            if(numerator_num < smallDouble){
-//                numerator_num *= largeDouble;
-//                numerator_overflow--;
-//            }
-//
-//
-//            numerator_last_num[d][k] = numerator_num;
-//            numerator_last_overflow[d][k] = numerator_overflow;
-
             numerator_last_num[d][k] *= value;
             numerator_last_overflow[d][k] += overflow;
 
@@ -366,6 +331,7 @@ public class Model{
                 numerator_last_num[d][k] *= largeDouble;
                 numerator_last_overflow[d][k]--;
             }
+
 			prob[k] *= numerator_last_num[d][k]/denominator_num;
 			overflowCount[k] = numerator_last_overflow[d][k] - denominator_overflow;
 		}
@@ -395,11 +361,6 @@ public class Model{
 				int wordNo = document.wordIdArray[w];
 				int wordFre = document.wordFreArray[w];
 				index1 = n_zv[k][wordNo];
-
-				if(d == 1){
-					n_zv_d1[k][wordNo] = index1;
-				}
-
 				index2 = index1 + wordFre;
 
 				numerator_num *= numerator_index_num[index2] / numerator_index_num[index1];
