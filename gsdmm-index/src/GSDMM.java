@@ -20,9 +20,6 @@ public class GSDMM
 	double[] denominator_index_num;
 	int[] denominator_index_overflow;
 
-	double[] numerator_index_num_reverse;
-	double[] denominator_index_num_reverse;
-
 	public GSDMM(int K, double alpha, double beta, int iterNum, String dataset) {
 		this.K = K;
 		this.alpha = alpha;
@@ -100,11 +97,9 @@ public class GSDMM
 		if(useIndex == true){
 			model.numerator_index_num = numerator_index_num;
 			model.numerator_index_overflow = numerator_index_overflow;
-//			model.numerator_index_num_reverse = numerator_index_num_reverse;
 
 			model.denominator_index_num = denominator_index_num;
 			model.denominator_index_overflow = denominator_index_overflow;
-//			model.denominator_index_num_reverse = denominator_index_num_reverse;
 
 		}
 

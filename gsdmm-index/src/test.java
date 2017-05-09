@@ -1,15 +1,16 @@
 import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
+import java.util.Random;
+
 /**
  * Created by ttx on 22/04/2017.
  */
 public class test {
     public static void main(String[] args) {
-       int[] test = new int[2];
-       test[0] = 1;
-       int[] cop = test;
-       test= new int[2];
-       test[0] = 2;
-        System.out.println(cop[0]);
+        Random random = new Random(10);
+        Random random2 = new Random(10);
+        for(int i = 0; i < 5;i++){
+            System.out.println(random.nextDouble() + "," + random2.nextDouble());
+        }
     }
 }

@@ -12,3 +12,11 @@
 hs_err_pid*
 
 .idea/
+
+gsdmm-index/result/20ngK50iterNum50alpha0.100beta0.100/20ngClusteringResult.txt
+
+*.txt
+
+gsdmm-index/result/20ngK20iterNum5alpha0.100beta0.100/20ngClusteringResult.txt
+
+*.txt
